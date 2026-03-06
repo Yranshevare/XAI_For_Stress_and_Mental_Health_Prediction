@@ -6,63 +6,10 @@ df = pd.read_csv("./S2_chest_data.csv")
 df.head(2)
 ```
 Output:
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ACC_X</th>
-      <th>ACC_Y</th>
-      <th>ACC_Z</th>
-      <th>ECG</th>
-      <th>EMG</th>
-      <th>EDA</th>
-      <th>Temp</th>
-      <th>Resp</th>
-      <th>Label</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0.9554</td>
-      <td>-0.2220</td>
-      <td>-0.5580</td>
-      <td>0.021423</td>
-      <td>-0.004440</td>
-      <td>5.250549</td>
-      <td>30.120758</td>
-      <td>-1.148987</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0.9258</td>
-      <td>-0.2216</td>
-      <td>-0.5538</td>
-      <td>0.020325</td>
-      <td>0.004349</td>
-      <td>5.267334</td>
-      <td>30.129517</td>
-      <td>-1.124573</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+|    | ACC_X  | ACC_Y  | ACC_Z  | ECG       | EMG       | EDA      | Temp      | Resp      | Label |
+|----|--------|--------|--------|-----------|-----------|----------|-----------|-----------|-------|
+| 0  | 0.9554 | -0.2220| -0.5580| 0.021423  | -0.004440 | 5.250549 | 30.120758 | -1.148987 | 0     |
+| 1  | 0.9258 | -0.2216| -0.5538| 0.020325  | 0.004349  | 5.267334 | 30.129517 | -1.124573 | 0     |
 
 ### 1. ACC_X, ACC_Y, ACC_Z (Accelerometer)
 Type: Motion sensor\
@@ -235,10 +182,13 @@ Respiration signal
 > each value in the `Resp` column is simply the instantaneous breathing signal at that moment.
 
 ### 7. Label (Ground Truth)
-| Label | Meaning                |
-| ----- | ---------------------- |
-| 0     | undefined / transition |
-| 1     | baseline (relaxed)     |
-| 2     | stress                 |
-| 3     | amusement              |
-| 4     | meditation             |
+| Label       | Meaning                           |
+| ----------- | --------------------------------- |
+| **0**       | Undefined / transient state       |
+| **1**       | Baseline (relaxed, resting state) |
+| **2**       | Stress condition                  |
+| **3**       | Amusement (watching funny videos) |
+| **4**       | Meditation                        |
+| **5, 6, 7** | Not used / should be ignored      |
+
+> Label = 0 means: The subject is not clearly in baseline, stress, amusement, or meditation.
