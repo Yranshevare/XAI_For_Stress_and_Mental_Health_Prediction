@@ -2,6 +2,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,python
 
 *.pkl
+*.csv
+*.zip
+*.part  
 
 ### Node ###
 # Logs
