@@ -19,7 +19,7 @@ pip install uv
 ```
 Make sure you have `DRIVE_FILE_ID` in your `.env` file
 
-### To load Dataset
+### Download Dataset
 1. open the terminal and run following command to install dependencies
 ```
 uv sync
@@ -32,4 +32,4 @@ cd Dataset
 ```bash
 uv run loadData.py
 ```
-**Now let the script run and it will download the .zip file of dataset and extract it**
+**Now let the script finish and it will download the `.zip` file of dataset and extract it**
