@@ -16,5 +16,6 @@ dependencies = [
     "seaborn>=0.13.2",
     "shap>=0.51.0",
     "stream-inflate>=0.0.43",
+    "xgboost>=3.2.0",
     "zstandard>=0.25.0",
 ]
