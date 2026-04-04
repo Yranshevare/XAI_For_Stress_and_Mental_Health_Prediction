@@ -5,10 +5,19 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dice-ml>=0.12",
     "gdown>=5.2.1",
+    "imblearn>=0.0",
     "jupyterlab>=4.5.5",
+    "lime>=0.2.0.1",
     "matplotlib>=3.10.8",
     "pandas>=3.0.1",
     "python-dotenv>=1.2.2",
+    "pyzipper>=0.3.6",
     "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
+    "shap>=0.51.0",
+    "stream-inflate>=0.0.43",
+    "xgboost>=3.2.0",
+    "zstandard>=0.25.0",
 ]
