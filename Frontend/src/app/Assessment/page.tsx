@@ -109,18 +109,26 @@ const FEATURE_GROUPS: { title: string; keys: string[] }[] = [
 // };
 
 function parseCSV(text: string): Record<string, string> {
-    const lines = text.trim().split("\n");
-    if (lines.length < 2) return {};
-    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-    const values = lines[1].split(",").map((v) => v.trim());
-    const result: Record<string, string> = {};
-    headers.forEach((h, i) => {
-        if (FEATURE_KEYS.includes(h) && values[i] !== undefined) {
-            result[h] = values[i];
-        }
-    });
-    // console.log("Parsed CSV:", result);
-    return result;
+    try {
+        const lines = text.trim().split("\n");
+        if (lines.length < 2) return {};
+        const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+        const values = lines[1].split(",").map((v) => v.trim());
+        const result: Record<string, string> = {};
+        headers.forEach((h, i) => {
+            if (FEATURE_KEYS.includes(h) && values[i] !== undefined) {
+                result[h] = values[i];
+            }
+        });
+        Object.keys(result).forEach((k) => {
+            if (!FEATURE_KEYS.includes(k)) {
+                delete result[k];
+            }
+        });
+        return result;
+    } catch (error) {
+        return { error: "Failed to parse CSV. Please ensure it has a header row with valid feature names and a single row of values." };
+    }
 }
 
 const Assessment = () => {
@@ -130,22 +138,30 @@ const Assessment = () => {
     const [dragOver, setDragOver] = useState(false);
     const navigate = useRouter();
 
-    const loadFile = useCallback((file: File) => {
-        setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const text = e.target?.result as string;
-            const parsed = parseCSV(text);
-            // Fill with dummy values for any missing keys
-            const merged: Record<string, string> = {};
-            FEATURE_KEYS.forEach((k) => {
-                merged[k] = parsed[k] || "0.00";
-            });
-            setFormData(merged);
-            setPhase("verify");
-        };
-        reader.readAsText(file);
-    }, []);
+    const loadFile = useCallback(
+        (file: File) => {
+            setFileName(file.name);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target?.result as string;
+                const parsed = parseCSV(text);
+                if (parsed.error) {
+                    alert(parsed.error);
+                    return;
+                }
+                // Fill with dummy values for any missing keys
+                const merged: Record<string, string> = {};
+                FEATURE_KEYS.forEach((k) => {
+                    merged[k] = parsed[k] || "0.00";
+                });
+                setFormData(merged);
+                setPhase("verify");
+            };
+            // console.log("Loading file:", file.);
+            reader.readAsText(file);
+        },
+        [fileName]
+    );
 
     const handleDrop = useCallback(
         (e: React.DragEvent) => {
@@ -169,7 +185,7 @@ const Assessment = () => {
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleSubmit = () => navigate.push("/results");
+    const handleSubmit = () => navigate.push("/Results");
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden pt-16">

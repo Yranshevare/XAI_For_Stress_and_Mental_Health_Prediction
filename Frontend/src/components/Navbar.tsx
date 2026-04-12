@@ -6,12 +6,12 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-const navLinks = [
-    { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Research", href: "#" },
-    { label: "Contact", href: "#" },
-];
+// const navLinks = [
+//     { label: "Features", href: "#features" },
+//     { label: "How It Works", href: "#how-it-works" },
+//     { label: "Research", href: "#" },
+//     { label: "Contact", href: "#" },
+// ];
 
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,7 +31,7 @@ const Navbar = () => {
                     <span className="font-bold text-lg tracking-tight text-foreground">MindPredict AI</span>
                 </Link>
 
-                <div className="hidden md:flex items-center gap-8">
+                {/* <div className="hidden md:flex items-center gap-8">
                     {navLinks.map((link) => (
                         <a
                             key={link.label}
@@ -41,7 +41,7 @@ const Navbar = () => {
                             {link.label}
                         </a>
                     ))}
-                </div>
+                </div> */}
 
                 <div className="hidden md:flex items-center gap-3">
                     <Link href="/assessment">
@@ -63,7 +63,7 @@ const Navbar = () => {
                         className="md:hidden overflow-hidden glass border-t border-border"
                     >
                         <div className="container py-4 flex flex-col gap-3">
-                            {navLinks.map((link) => (
+                            {/* {navLinks.map((link) => (
                                 <a
                                     key={link.label}
                                     href={link.href}
@@ -72,7 +72,7 @@ const Navbar = () => {
                                 >
                                     {link.label}
                                 </a>
-                            ))}
+                            ))} */}
                             <Link href="/assessment" onClick={() => setMobileOpen(false)}>
                                 <Button className="w-full bg-gradient-primary">Get Started</Button>
                             </Link>
