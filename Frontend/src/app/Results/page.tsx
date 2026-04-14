@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Bell, User, BarChart3, Sparkles, RefreshCw, Home, ArrowRight, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 // import { Progress } from "@/components/ui/progress";
 
 const stressDrivers = [
@@ -22,7 +24,23 @@ const weeklyData = [65, 45, 70, 55, 80, 60, 65];
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const Results = () => {
-    const score = 65;
+    const searchParams = useSearchParams();
+    const [resultData, setResultData] = useState<any>(null);
+
+    useEffect(() => {
+        try {
+            const encodedResult = searchParams.get("result");
+            if (encodedResult) {
+                const decoded = JSON.parse(decodeURIComponent(encodedResult));
+                setResultData(decoded);
+                console.log("Decoded result data:", decoded);
+            }
+        } catch (error) {
+            console.error("Error decoding result:", error);
+        }
+    }, [searchParams]);
+
+    const score = Math.max(resultData?.prediction_probability["0"] || 0, resultData?.prediction_probability["1"] || 0) * 100;
     const circumference = 2 * Math.PI * 54;
     const strokeDashoffset = circumference - (score / 100) * circumference;
 
@@ -96,7 +114,7 @@ const Results = () => {
                                     transition={{ delay: 1 }}
                                     className="text-4xl font-bold text-foreground"
                                 >
-                                    {score}
+                                    {score.toFixed(2)}
                                 </motion.span>
                                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Score</span>
                             </div>
@@ -130,67 +148,130 @@ const Results = () => {
                 </motion.div>
 
                 {/* Grid */}
-                <div className="grid md:grid-cols-5 gap-6 mb-6">
-                    {/* Stress Drivers */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6 h-96">
+                    {/* Stress Drivers / LIME Features */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="md:col-span-3 bg-card rounded-2xl border border-border shadow-card p-6"
+                        className="bg-card rounded-2xl border border-border shadow-card p-6 h-full flex flex-col"
                     >
                         <div className="flex items-center gap-2 mb-6">
                             <Sparkles className="w-5 h-5 text-primary" />
-                            <h2 className="text-lg font-bold text-foreground">Top Stress Drivers</h2>
+                            <h2 className="text-lg font-bold text-foreground">Top Stress Drivers (LIME)</h2>
                         </div>
-                        <div className="space-y-5">
-                            {stressDrivers.map((driver, i) => (
-                                <motion.div
-                                    key={driver.label}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + i * 0.1 }}
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium text-foreground">{driver.label}</span>
-                                        <span className="text-sm font-semibold text-primary">{driver.impact}% Impact</span>
-                                    </div>
-                                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${driver.impact * 2.5}%` }}
-                                            transition={{ duration: 1, delay: 0.7 + i * 0.15, ease: "easeOut" }}
-                                            className={`h-full rounded-full bg-gradient-to-r ${driver.color}`}
-                                        />
-                                    </div>
-                                </motion.div>
-                            ))}
+                        <div className="space-y-5 max-h-64 overflow-y-auto flex-1">
+                            {resultData?.lime_top_features && resultData.lime_top_features.length > 0
+                                ? resultData.lime_top_features.map((driver: any, i: number) => (
+                                      <motion.div
+                                          key={driver.feature}
+                                          initial={{ opacity: 0, x: -20 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          transition={{ delay: 0.5 + i * 0.1 }}
+                                      >
+                                          <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium text-foreground">{driver.feature}</span>
+                                              <span className="text-sm font-semibold text-primary">{(driver.importance * 100).toFixed(2)}%</span>
+                                          </div>
+                                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                              <motion.div
+                                                  initial={{ width: 0 }}
+                                                  animate={{ width: `${Math.min(Math.abs(driver.importance) * 100, 100)}%` }}
+                                                  transition={{ duration: 1, delay: 0.7 + i * 0.15, ease: "easeOut" }}
+                                                  className={`h-full rounded-full bg-gradient-to-r ${
+                                                      driver.importance >= 0 ? "from-primary to-primary/60" : "from-destructive to-destructive/60"
+                                                  }`}
+                                              />
+                                          </div>
+                                      </motion.div>
+                                  ))
+                                : stressDrivers.map((driver, i) => (
+                                      <motion.div
+                                          key={driver.label}
+                                          initial={{ opacity: 0, x: -20 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          transition={{ delay: 0.5 + i * 0.1 }}
+                                      >
+                                          <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium text-foreground">{driver.label}</span>
+                                              <span className="text-sm font-semibold text-primary">{driver.impact}% Impact</span>
+                                          </div>
+                                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                              <motion.div
+                                                  initial={{ width: 0 }}
+                                                  animate={{ width: `${driver.impact * 2.5}%` }}
+                                                  transition={{ duration: 1, delay: 0.7 + i * 0.15, ease: "easeOut" }}
+                                                  className={`h-full rounded-full bg-gradient-to-r ${driver.color}`}
+                                              />
+                                          </div>
+                                      </motion.div>
+                                  ))}
                         </div>
                     </motion.div>
 
-                    {/* Model Details + Actions */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="md:col-span-2 space-y-6"
-                    >
-                        <div className="bg-card rounded-2xl border border-border shadow-card p-6">
-                            <h3 className="font-bold text-foreground mb-4">Model Details</h3>
-                            <div className="space-y-3">
-                                {modelDetails.map((item, i) => (
+                    {/* SHAP Features */}
+                    {resultData?.shap_top_features && resultData.shap_top_features.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="bg-card rounded-2xl border border-border shadow-card p-6 h-full flex flex-col"
+                        >
+                            <div className="flex items-center gap-2 mb-4">
+                                <BarChart3 className="w-5 h-5 text-primary" />
+                                <h2 className="text-lg font-bold text-foreground">Top Features (SHAP)</h2>
+                            </div>
+                            <div className="space-y-3 max-h-64 overflow-y-auto flex-1">
+                                {resultData.shap_top_features.map((item: any, i: number) => (
                                     <motion.div
-                                        key={item.label}
+                                        key={item.feature}
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.6 + i * 0.1 }}
-                                        className="flex items-center justify-between"
+                                        transition={{ delay: 0.5 + i * 0.05 }}
+                                        className="flex items-center justify-between p-2 bg-secondary rounded-md"
                                     >
-                                        <span className="text-sm text-muted-foreground">{item.label}</span>
-                                        <span className="text-sm font-semibold text-foreground">{item.value}</span>
+                                        <span className="text-sm font-medium text-foreground">{item.feature}</span>
+                                        <span className={`text-sm font-semibold ${item.importance >= 0 ? "text-primary" : "text-destructive"}`}>
+                                            {item.importance.toFixed(3)}
+                                        </span>
                                     </motion.div>
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
+                    )}
+
+                    {/* Model Details + Prediction Probability */}
+                    {/* <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-6 h-full">
+                        <div className="bg-card rounded-2xl border border-border shadow-card p-6 flex-1">
+                            <h3 className="font-bold text-foreground mb-4">Prediction Probability</h3>
+                            <div className="space-y-3">
+                                {resultData?.prediction_probability
+                                    ? Object.entries(resultData.prediction_probability).map(([label, prob]: [string, any]) => (
+                                          <motion.div
+                                              key={label}
+                                              initial={{ opacity: 0 }}
+                                              animate={{ opacity: 1 }}
+                                              transition={{ delay: 0.6 }}
+                                              className="flex items-center justify-between"
+                                          >
+                                              <span className="text-sm text-muted-foreground">Class {label}</span>
+                                              <span className="text-sm font-semibold text-foreground">{(prob * 100).toFixed(2)}%</span>
+                                          </motion.div>
+                                      ))
+                                    : modelDetails.map((item, i) => (
+                                          <motion.div
+                                              key={item.label}
+                                              initial={{ opacity: 0 }}
+                                              animate={{ opacity: 1 }}
+                                              transition={{ delay: 0.6 + i * 0.1 }}
+                                              className="flex items-center justify-between"
+                                          >
+                                              <span className="text-sm text-muted-foreground">{item.label}</span>
+                                              <span className="text-sm font-semibold text-foreground">{item.value}</span>
+                                          </motion.div>
+                                      ))}
+                            </div>
+                        </div>  
 
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="space-y-3">
                             <Button size="lg" className="w-full bg-gradient-primary hover:opacity-90 shadow-lg shadow-primary/20 group" asChild>
@@ -206,7 +287,7 @@ const Results = () => {
                                 </Link>
                             </Button>
                         </motion.div>
-                    </motion.div>
+                    </motion.div> */}
                 </div>
 
                 {/* Bottom Grid */}

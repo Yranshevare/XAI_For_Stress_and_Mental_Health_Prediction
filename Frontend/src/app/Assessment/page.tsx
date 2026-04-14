@@ -214,8 +214,8 @@ const Assessment = () => {
 
             const res = await axios.post("http://127.0.0.1:5000/predict", dataToSend);
             
-            // console.log("Backend response status:", res.status);
-            // console.log("Backend response data:", res.data);
+            console.log("Backend response status:", res.status);
+            console.log("Backend response data:", res.data);
             
             if (res.status === 200) {
                 console.log("✓ Assessment completed successfully");
