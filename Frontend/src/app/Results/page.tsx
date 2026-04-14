@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-// import { Progress } from "@/components/ui/progress";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const stressDrivers = [
     { label: "Sleep Quality", impact: 32, color: "from-primary to-primary/60" },
@@ -57,6 +57,12 @@ const Results = () => {
             : score >= 40
             ? "Your stress level is moderate. Keep tracking your data and maintain healthy routines."
             : "Your stress level is low. Continue with your current self-care habits and stay mindful of small changes.";
+
+    const limeChartData = resultData?.lime_top_features ? resultData.lime_top_features.map((item: any) => ({
+        name: item.feature,
+        value: item.importance * 100,
+        fill: item.importance >= 0 ? "#10b981" : "#ef4444", // green for positive, red for negative
+    })) : [];
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden">
@@ -160,20 +166,20 @@ const Results = () => {
                     </div>
                 </motion.div>
 
-                {/* Grid */}
-                <div className="grid md:grid-cols-2 gap-6 mb-6 h-96">
-                    {/* Stress Drivers / LIME Features */}
+                {/* 2-Column Grid Layout */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    {/* Row 1, Col 1: Top Stress Drivers (LIME) */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="bg-card rounded-2xl border border-border shadow-card p-6 h-full flex flex-col"
+                        className="bg-card rounded-2xl border border-border shadow-card p-6"
                     >
-                        <div className="flex items-center gap-2 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
                             <Sparkles className="w-5 h-5 text-primary" />
                             <h2 className="text-lg font-bold text-foreground">Top Stress Drivers (LIME)</h2>
                         </div>
-                        <div className="space-y-5 max-h-64 overflow-y-auto flex-1">
+                        <div className="space-y-4 max-h-72 overflow-y-auto">
                             {resultData?.lime_top_features && resultData.lime_top_features.length > 0
                                 ? resultData.lime_top_features.map((driver: any, i: number) => (
                                       <motion.div
@@ -184,16 +190,14 @@ const Results = () => {
                                       >
                                           <div className="flex items-center justify-between mb-2">
                                               <span className="text-sm font-medium text-foreground">{driver.feature}</span>
-                                              <span className="text-sm font-semibold text-primary">{(driver.importance * 100).toFixed(2)}%</span>
+                                              <span className={`text-sm font-semibold ${driver.importance >= 0 ? "text-primary" : "text-destructive"}`}>{(driver.importance * 100).toFixed(2)}%</span>
                                           </div>
-                                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                          <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                                               <motion.div
                                                   initial={{ width: 0 }}
                                                   animate={{ width: `${Math.min(Math.abs(driver.importance) * 100, 100)}%` }}
                                                   transition={{ duration: 1, delay: 0.7 + i * 0.15, ease: "easeOut" }}
-                                                  className={`h-full rounded-full bg-gradient-to-r ${
-                                                      driver.importance >= 0 ? "from-primary to-primary/60" : "from-destructive to-destructive/60"
-                                                  }`}
+                                                  className={`h-full rounded-full ${driver.importance >= 0 ? "bg-primary" : "bg-destructive"}`}
                                               />
                                           </div>
                                       </motion.div>
@@ -209,7 +213,7 @@ const Results = () => {
                                               <span className="text-sm font-medium text-foreground">{driver.label}</span>
                                               <span className="text-sm font-semibold text-primary">{driver.impact}% Impact</span>
                                           </div>
-                                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                          <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                                               <motion.div
                                                   initial={{ width: 0 }}
                                                   animate={{ width: `${driver.impact * 2.5}%` }}
@@ -222,26 +226,94 @@ const Results = () => {
                         </div>
                     </motion.div>
 
-                    {/* SHAP Features */}
-                    {resultData?.shap_top_features && resultData.shap_top_features.length > 0 && (
+                    {/* Row 1, Col 2: LIME Feature Importance Graph */}
+                    {resultData?.lime_top_features && resultData.lime_top_features.length > 0 ? (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
-                            className="bg-card rounded-2xl border border-border shadow-card p-6 h-full flex flex-col"
+                            className="bg-card rounded-2xl border border-border shadow-card p-6"
+                        >
+                            <div className="flex items-center gap-2 mb-4">
+                                <BarChart3 className="w-5 h-5 text-primary" />
+                                <h2 className="text-lg font-bold text-foreground">LIME Feature Importance</h2>
+                            </div>
+                            <div className="h-72">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={limeChartData} layout="vertical" margin={{ left: 20, right: 40 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" domain={['auto', 'auto']} />
+                                        <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} />
+                                        <Tooltip
+                                            //@ts-expect-error
+                                            formatter={(value: number) => [`${value.toFixed(2)}%`, 'Importance']}
+                                            labelFormatter={(label) => `Feature: ${label}`}
+                                        />
+                                        <Bar dataKey="value" barSize={18}>
+                                            {limeChartData.map((entry: { name: string; value: number; fill: string }, index: number) => (
+                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="bg-card rounded-2xl border border-border shadow-card p-6 flex items-center justify-center"
+                        >
+                            <div className="text-center text-muted-foreground">
+                                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p className="text-sm">LIME data not available</p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Row 2, Col 2: SHAP Waterfall */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="bg-card rounded-2xl border border-border shadow-card p-6"
+                    >
+                        <div className="flex items-center gap-2 mb-4">
+                            <BarChart3 className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-bold text-foreground">SHAP Waterfall</h2>
+                        </div>
+                        {waterfallPlot ? (
+                            <div className="rounded-xl overflow-hidden border border-border bg-black/5">
+                                <img src={waterfallPlot} alt="SHAP Waterfall Plot" className="w-full h-[280px] object-contain bg-white" />
+                            </div>
+                        ) : (
+                            <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed border-border bg-secondary text-sm text-muted-foreground">
+                                No SHAP waterfall image available.
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* Row 2, Col 1: Top Features (SHAP) */}
+                    {resultData?.shap_top_features && resultData.shap_top_features.length > 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="bg-card rounded-2xl border border-border shadow-card p-6"
                         >
                             <div className="flex items-center gap-2 mb-4">
                                 <BarChart3 className="w-5 h-5 text-primary" />
                                 <h2 className="text-lg font-bold text-foreground">Top Features (SHAP)</h2>
                             </div>
-                            <div className="space-y-3 max-h-64 overflow-y-auto flex-1">
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
                                 {resultData.shap_top_features.map((item: any, i: number) => (
                                     <motion.div
                                         key={item.feature}
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.5 + i * 0.05 }}
-                                        className="flex items-center justify-between p-2 bg-secondary rounded-md"
+                                        transition={{ delay: 0.6 + i * 0.05 }}
+                                        className="flex items-center justify-between p-3 bg-secondary rounded-lg"
                                     >
                                         <span className="text-sm font-medium text-foreground">{item.feature}</span>
                                         <span className={`text-sm font-semibold ${item.importance >= 0 ? "text-primary" : "text-destructive"}`}>
@@ -251,104 +323,44 @@ const Results = () => {
                                 ))}
                             </div>
                         </motion.div>
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="bg-card rounded-2xl border border-border shadow-card p-6 flex items-center justify-center"
+                        >
+                            <div className="text-center text-muted-foreground">
+                                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p className="text-sm">SHAP data not available</p>
+                            </div>
+                        </motion.div>
                     )}
 
-                    {/* Model Details + Prediction Probability */}
-                    {/* <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-6 h-full">
-                        <div className="bg-card rounded-2xl border border-border shadow-card p-6 flex-1">
-                            <h3 className="font-bold text-foreground mb-4">Prediction Probability</h3>
-                            <div className="space-y-3">
-                                {resultData?.prediction_probability
-                                    ? Object.entries(resultData.prediction_probability).map(([label, prob]: [string, any]) => (
-                                          <motion.div
-                                              key={label}
-                                              initial={{ opacity: 0 }}
-                                              animate={{ opacity: 1 }}
-                                              transition={{ delay: 0.6 }}
-                                              className="flex items-center justify-between"
-                                          >
-                                              <span className="text-sm text-muted-foreground">Class {label}</span>
-                                              <span className="text-sm font-semibold text-foreground">{(prob * 100).toFixed(2)}%</span>
-                                          </motion.div>
-                                      ))
-                                    : modelDetails.map((item, i) => (
-                                          <motion.div
-                                              key={item.label}
-                                              initial={{ opacity: 0 }}
-                                              animate={{ opacity: 1 }}
-                                              transition={{ delay: 0.6 + i * 0.1 }}
-                                              className="flex items-center justify-between"
-                                          >
-                                              <span className="text-sm text-muted-foreground">{item.label}</span>
-                                              <span className="text-sm font-semibold text-foreground">{item.value}</span>
-                                          </motion.div>
-                                      ))}
-                            </div>
-                        </div>  
-
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="space-y-3">
-                            <Button size="lg" className="w-full bg-gradient-primary hover:opacity-90 shadow-lg shadow-primary/20 group" asChild>
-                                <Link href="/assessment">
-                                    <RefreshCw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-                                    Run New Prediction
-                                </Link>
-                            </Button>
-                            <Button variant="outline" size="lg" className="w-full border-border hover:bg-secondary" asChild>
-                                <Link href="/">
-                                    <Home className="w-4 h-4 mr-2" />
-                                    Go to Home
-                                </Link>
-                            </Button>
-                        </motion.div>
-                    </motion.div> */}
+                    
                 </div>
 
-                {/* Bottom Grid */}
-                <div className="grid md:grid-cols-2 gap-6 mb-10">
-                    {/* AI Insight */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
-                        className="bg-card rounded-2xl border border-border shadow-card p-6"
+                {/* AI Insight - Full Width Bottom */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="bg-card rounded-2xl border border-border shadow-card p-6 mb-10"
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                        <h2 className="text-lg font-bold text-foreground">AI Insight</h2>
+                    </div>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                        className="text-muted-foreground leading-relaxed italic"
                     >
-                        <div className="flex items-center gap-2 mb-4">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <h2 className="text-lg font-bold text-foreground">AI Insight</h2>
-                        </div>
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.9 }}
-                            className="text-muted-foreground leading-relaxed italic"
-                        >
-                            "Your recent data shows a correlation between late-night screen time and decreased HRV. The model predicts that
-                            prioritizing 15 minutes of mindfulness before bed could reduce your morning stress score by up to 15%."
-                        </motion.p>
-                    </motion.div>
-
-                    {/* SHAP Waterfall Plot */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 }}
-                        className="bg-card rounded-2xl border border-border shadow-card p-6"
-                    >
-                        <div className="flex items-center gap-2 mb-4">
-                            <BarChart3 className="w-5 h-5 text-primary" />
-                            <h2 className="text-lg font-bold text-foreground">SHAP Waterfall</h2>
-                        </div>
-                        {waterfallPlot ? (
-                            <div className="rounded-3xl overflow-hidden border border-border bg-black/5">
-                                <img src={waterfallPlot} alt="SHAP Waterfall Plot" className="w-full h-[340px] object-contain bg-white" />
-                            </div>
-                        ) : (
-                            <div className="flex h-[340px] items-center justify-center rounded-3xl border border-dashed border-border bg-secondary text-sm text-muted-foreground">
-                                No SHAP waterfall image available.
-                            </div>
-                        )}
-                    </motion.div>
-                </div>
+                        "Your recent data shows a correlation between late-night screen time and decreased HRV. The model predicts that
+                        prioritizing 15 minutes of mindfulness before bed could reduce your morning stress score by up to 15%."
+                    </motion.p>
+                </motion.div>
 
                 {/* Footer */}
                 <motion.div
