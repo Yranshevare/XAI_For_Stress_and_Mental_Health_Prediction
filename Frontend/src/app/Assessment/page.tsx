@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const FEATURE_KEYS = [
     "acc_x_mean",
@@ -185,7 +186,48 @@ const Assessment = () => {
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleSubmit = () => navigate.push("/Results");
+    const handleSubmit = async () => {
+        try {
+            // Get sensor features only (exclude label and subject)
+            const sensorFeatures = [
+                "acc_x_mean", "acc_x_std", "acc_x_min", "acc_x_max",
+                "acc_y_mean", "acc_y_std", "acc_y_min", "acc_y_max",
+                "acc_z_mean", "acc_z_std", "acc_z_min", "acc_z_max",
+                "ecg_mean", "ecg_std", "ecg_min", "ecg_max",
+                "emg_mean", "emg_std", "emg_min", "emg_max",
+                "eda_mean", "eda_std", "eda_min", "eda_max",
+                "temp_mean", "temp_std", "temp_min", "temp_max",
+                "resp_mean", "resp_std", "resp_min", "resp_max",
+                "net_acc_mean", "net_acc_std", "net_acc_min", "net_acc_max",
+                "ecg_peak_freq", "resp_peak_freq",
+                "temp_slope", "eda_slope"
+            ];
+
+            // Convert string values to numbers and only include sensor features
+            const dataToSend: Record<string, number> = {};
+            sensorFeatures.forEach((key) => {
+                const value = formData[key];
+                dataToSend[key] = parseFloat(value) || 0;
+            });
+
+            // console.log("Sending data to backend:", dataToSend);
+
+            const res = await axios.post("http://127.0.0.1:5000/predict", dataToSend);
+            
+            // console.log("Backend response status:", res.status);
+            // console.log("Backend response data:", res.data);
+            
+            if (res.status === 200) {
+                console.log("✓ Assessment completed successfully");
+                navigate.push("/Results?result=" + encodeURIComponent(JSON.stringify(res.data)));
+            } else {
+                alert("Failed to run assessment. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error during assessment:", error);
+            alert("An error occurred while running the assessment. Please check your data and try again.");
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden pt-16">
