@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Bell, User, Upload, FileText, CheckCircle, Edit3, ArrowRight, X } from "lucide-react";
+import { Lock, Bell, User, Upload, FileText, CheckCircle, Edit3, ArrowRight, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -137,7 +137,10 @@ const Assessment = () => {
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [fileName, setFileName] = useState("");
     const [dragOver, setDragOver] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useRouter();
+
+    
 
     const loadFile = useCallback(
         (file: File) => {
@@ -188,6 +191,7 @@ const Assessment = () => {
 
     const handleSubmit = async () => {
         try {
+            setLoading(true);
             // Get sensor features only (exclude label and subject)
             const sensorFeatures = [
                 "acc_x_mean", "acc_x_std", "acc_x_min", "acc_x_max",
@@ -230,11 +234,19 @@ const Assessment = () => {
                 alert("Failed to run assessment. Please try again.");
             }
         } catch (error) {
+            setLoading(false);
             console.error("Error during assessment:", error);
             alert("An error occurred while running the assessment. Please check your data and try again.");
         }
     };
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center gap-2 justify-center bg-background">
+                <Loader2 className="animate-spin h-5 w-5" /> submitting....
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen bg-background relative overflow-hidden pt-16">
             <div className="absolute top-0 right-0 w-80 h-80 bg-accent/30 rounded-full blur-3xl" />

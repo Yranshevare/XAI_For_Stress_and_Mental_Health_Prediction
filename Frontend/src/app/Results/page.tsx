@@ -60,7 +60,8 @@ const Results = () => {
         }
     }, [searchParams]);
 
-    const score = Math.max(resultData?.prediction_probability?.["0"] || 0, resultData?.prediction_probability?.["1"] || 0) * 100;
+    const score = (resultData?.prediction_probability?.["1"] || 0) * 100;
+    // const score = Math.max(resultData?.prediction_probability?.["0"] || 0, resultData?.prediction_probability?.["1"] || 0) * 100;
     const circumference = 2 * Math.PI * 54;
     const strokeDashoffset = circumference - (score / 100) * circumference;
 
