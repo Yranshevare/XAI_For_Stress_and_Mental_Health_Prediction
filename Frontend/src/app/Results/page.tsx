@@ -14,12 +14,6 @@ const stressDrivers = [
     { label: "Caffeine Intake", impact: 12, color: "from-primary/50 to-primary/20" },
 ];
 
-const modelDetails = [
-    { label: "Confidence Level", value: "94.2%" },
-    { label: "Last Updated", value: "Just now" },
-    { label: "Data Points", value: "1,240" },
-];
-
 const weeklyData = [65, 45, 70, 55, 80, 60, 65];
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -40,9 +34,19 @@ const Results = () => {
         }
     }, [searchParams]);
 
-    const score = Math.max(resultData?.prediction_probability["0"] || 0, resultData?.prediction_probability["1"] || 0) * 100;
+    const score = Math.max(resultData?.prediction_probability?.["0"] || 0, resultData?.prediction_probability?.["1"] || 0) * 100;
     const circumference = 2 * Math.PI * 54;
     const strokeDashoffset = circumference - (score / 100) * circumference;
+
+    const stressLabel = score >= 80 ? "High Stress" : score >= 60 ? "Moderate Stress" : score >= 40 ? "Mild Stress" : "Low Stress";
+    const stressDescription =
+        score >= 80
+            ? "Your biometric patterns show significant physiological arousal. Consider immediate stress-relief actions such as deep breathing or a short walk."
+            : score >= 60
+            ? "Your body is under noticeable strain. Try reducing stimuli and taking one focused recovery break today."
+            : score >= 40
+            ? "Your stress level is moderate. Keep tracking your data and maintain healthy routines."
+            : "Your stress level is low. Continue with your current self-care habits and stay mindful of small changes.";
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden">
@@ -127,10 +131,9 @@ const Results = () => {
                                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                     Prediction Complete
                                 </span>
-                                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Moderate Stress</h1>
+                                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{stressLabel}</h1>
                                 <p className="text-muted-foreground leading-relaxed max-w-lg">
-                                    Your biometric patterns suggest an elevated level of physiological arousal. This is 12% higher than your baseline
-                                    from the last 7 days.
+                                    {stressDescription}
                                 </p>
                             </motion.div>
                         </div>
