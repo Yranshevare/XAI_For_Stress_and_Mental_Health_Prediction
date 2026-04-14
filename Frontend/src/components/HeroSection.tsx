@@ -88,7 +88,8 @@ const HeroSection = () => {
                         <div className="absolute inset-0 bg-accent/50 rounded-3xl blur-2xl scale-95" />
                         <div className="relative bg-card rounded-3xl shadow-elevated p-6 border border-border">
                             <img
-                                src={"./hero-plant.png"}
+                                // src={"./Woman-meditating_1600x.webp"}
+                                src={"./meditation-1717661535-hero.jpg"}
                                 alt="Growing plant symbolizing mental health"
                                 className="w-full h-56 object-contain animate-float"
                                 width={640}
