@@ -34,7 +34,7 @@ Tone:
 - Prioritize clarity over length
 `;
 
-export default async function Insight(data : any) {
+export default async function Insight(data: any) {
     const systemMessage = new SystemMessage(systemPromptTemplate);
     const humanMessage = new HumanMessage(`
 - Features: acc_x, acc_y, acc_z, ecg, eda, emg, resp, temp, 
@@ -43,9 +43,14 @@ export default async function Insight(data : any) {
 Data:
 ${JSON.stringify(data)}
         `);
-    const response = await llm.invoke([systemMessage, humanMessage]);
+    try {
+        const response = await llm.invoke([systemMessage, humanMessage]);
 
-    const insights = typeof response.content === "string" ? response.content : JSON.stringify(response.content);
+        const insights = typeof response.content === "string" ? response.content : JSON.stringify(response.content);
 
-    return insights;
+        return insights;
+    } catch (error) {
+        console.error("Error generating insights:", error);
+        return "LLM failed to generate insights. Please try again later.";
+    }
 }

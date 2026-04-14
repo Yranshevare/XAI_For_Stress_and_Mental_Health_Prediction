@@ -128,34 +128,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# @app.route('/waterfallPlot', methods=['POST'])
-# @cross_origin()
-# def waterfall_plot():
-#     try:
-#         data = request.get_json()
-
-#         # Convert input into DataFrame
-#         shap_values = pd.DataFrame([data])
-
-#         # Create plot
-#         plt.figure()
-#         shap.plots.waterfall(shap_values.iloc[0], show=False)
-
-#         # Save plot to buffer
-#         buf = io.BytesIO()
-#         plt.savefig(buf, format='png', bbox_inches='tight')
-#         plt.close()
-#         buf.seek(0)
-
-#         # Encode as base64
-#         img_base64 = base64.b64encode(buf.read()).decode('utf-8')
-
-#         return jsonify({
-#             "image": img_base64
-#         })
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 400
 
 @app.route('/')
 def home():
