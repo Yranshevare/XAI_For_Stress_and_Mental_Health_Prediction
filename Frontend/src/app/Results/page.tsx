@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { Bell, User, BarChart3, Sparkles, RefreshCw, Home, ArrowRight, TrendingUp } from "lucide-react";
+import { Bell, User, BarChart3, Sparkles, RefreshCw, Home, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -14,12 +14,10 @@ const stressDrivers = [
     { label: "Caffeine Intake", impact: 12, color: "from-primary/50 to-primary/20" },
 ];
 
-const weeklyData = [65, 45, 70, 55, 80, 60, 65];
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 const Results = () => {
     const searchParams = useSearchParams();
     const [resultData, setResultData] = useState<any>(null);
+    const [waterfallPlot, setWaterfallPlot] = useState<string | null>(null);
 
     useEffect(() => {
         try {
@@ -31,6 +29,18 @@ const Results = () => {
             }
         } catch (error) {
             console.error("Error decoding result:", error);
+        }
+
+        try {
+            const storedPlot = sessionStorage.getItem("waterfall_plot");
+            if (storedPlot) {
+                const plotValue = storedPlot.startsWith("data:image") ? storedPlot : `data:image/png;base64,${storedPlot.replace(/^"|"$/g, "")}`;
+                console.log(plotValue)
+                setWaterfallPlot(plotValue);
+            }
+        } catch (error) {
+            console.error("Error reading waterfall plot from sessionStorage:", error);
+            setWaterfallPlot(null);
         }
     }, [searchParams]);
 
@@ -317,47 +327,26 @@ const Results = () => {
                         </motion.p>
                     </motion.div>
 
-                    {/* Weekly Trend */}
+                    {/* SHAP Waterfall Plot */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 }}
                         className="bg-card rounded-2xl border border-border shadow-card p-6"
                     >
-                        <div className="flex items-end gap-1.5 h-32 mb-4">
-                            {weeklyData.map((val, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${val}%` }}
-                                    transition={{ duration: 0.6, delay: 0.9 + i * 0.08, ease: "easeOut" }}
-                                    className="flex-1 bg-gradient-to-t from-primary/60 to-primary/20 rounded-t-md relative group"
-                                >
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {val}
-                                    </div>
-                                </motion.div>
-                            ))}
+                        <div className="flex items-center gap-2 mb-4">
+                            <BarChart3 className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-bold text-foreground">SHAP Waterfall</h2>
                         </div>
-                        <div className="flex justify-between mb-4">
-                            {weekDays.map((day) => (
-                                <span key={day} className="text-[10px] font-medium text-muted-foreground flex-1 text-center">
-                                    {day}
-                                </span>
-                            ))}
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-foreground flex items-center gap-1.5">
-                                    <TrendingUp className="w-4 h-4 text-primary" />
-                                    Weekly Trend
-                                </h3>
-                                <p className="text-sm text-muted-foreground">Stable, with weekend spikes</p>
+                        {waterfallPlot ? (
+                            <div className="rounded-3xl overflow-hidden border border-border bg-black/5">
+                                <img src={waterfallPlot} alt="SHAP Waterfall Plot" className="w-full h-[340px] object-contain bg-white" />
                             </div>
-                            <span className="text-sm font-semibold text-primary flex items-center gap-1 cursor-pointer hover:underline">
-                                View Full Report <ArrowRight className="w-3 h-3" />
-                            </span>
-                        </div>
+                        ) : (
+                            <div className="flex h-[340px] items-center justify-center rounded-3xl border border-dashed border-border bg-secondary text-sm text-muted-foreground">
+                                No SHAP waterfall image available.
+                            </div>
+                        )}
                     </motion.div>
                 </div>
 

@@ -219,7 +219,13 @@ const Assessment = () => {
             
             if (res.status === 200) {
                 console.log("✓ Assessment completed successfully");
-                navigate.push("/Results?result=" + encodeURIComponent(JSON.stringify(res.data)));
+                const data = {
+                    lime_top_features: res.data.lime_top_features,
+                    prediction_probability: res.data.prediction_probability,
+                    shap_top_features: res.data.shap_top_features,
+                };
+                sessionStorage.setItem("waterfall_plot", res.data.waterfall_plot);
+                navigate.push("/Results?result=" + encodeURIComponent(JSON.stringify(data)))
             } else {
                 alert("Failed to run assessment. Please try again.");
             }

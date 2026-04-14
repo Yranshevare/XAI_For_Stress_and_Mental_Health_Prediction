@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg') 
 from flask import Flask, request, jsonify
 import pandas as pd
 from flask_cors import CORS, cross_origin
@@ -5,6 +7,9 @@ import pickle
 from lime.lime_tabular import LimeTabularExplainer
 import shap
 import numpy as np
+import matplotlib.pyplot as plt
+import io
+import base64
 
 # Init
 app = Flask(__name__)
@@ -48,7 +53,7 @@ def predict():
             for cls, prob in zip(classes, proba)
         }
 
-        # ---- LIME Explanation ----
+        # ---- LIME ----
         lime_exp = lime_explainer.explain_instance(
             data_row=input_df.iloc[0].values,
             predict_fn=model.predict_proba,
@@ -56,11 +61,8 @@ def predict():
         )
 
         lime_list = lime_exp.as_list()
-
-        # Sort by importance
         lime_sorted = sorted(lime_list, key=lambda x: abs(x[1]), reverse=True)
 
-        # Normalize (avoid meaningless tiny values)
         total = sum(abs(v) for _, v in lime_sorted) or 1
 
         lime_clean = [
@@ -71,16 +73,17 @@ def predict():
             for feature, value in lime_sorted[:10]
         ]
 
-        # ---- SHAP Explanation ----
+        # ---- SHAP ----
         shap_values = shap_explainer.shap_values(input_df)
 
-        # Handle binary vs multiclass
         if isinstance(shap_values, list):
-            shap_vals = shap_values[1]  # class 1
+            shap_vals = shap_values[1]
+            base_value = shap_explainer.expected_value[1]
         else:
             shap_vals = shap_values
+            base_value = shap_explainer.expected_value
 
-        shap_vals = shap_vals[0]  # single row
+        shap_vals = shap_vals[0]
 
         shap_clean = sorted(
             [
@@ -94,11 +97,30 @@ def predict():
             reverse=True
         )[:10]
 
-        # ---- Final Response ----
+        # ---- WATERFALL PLOT ----
+        exp = shap.Explanation(
+            values=shap_vals,
+            base_values=base_value,
+            data=input_df.iloc[0].values,
+            feature_names=input_df.columns.tolist()
+        )
+
+        plt.figure()
+        shap.plots.waterfall(exp, show=False)
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight')
+        plt.close()
+        buf.seek(0)
+
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+        # ---- FINAL RESPONSE ----
         response = {
             "prediction_probability": prob_dict,
             "lime_top_features": lime_clean,
-            "shap_top_features": shap_clean
+            "shap_top_features": shap_clean,
+            "waterfall_plot": img_base64   # ✅ merged here
         }
 
         return jsonify(response), 200
@@ -106,6 +128,34 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+# @app.route('/waterfallPlot', methods=['POST'])
+# @cross_origin()
+# def waterfall_plot():
+#     try:
+#         data = request.get_json()
+
+#         # Convert input into DataFrame
+#         shap_values = pd.DataFrame([data])
+
+#         # Create plot
+#         plt.figure()
+#         shap.plots.waterfall(shap_values.iloc[0], show=False)
+
+#         # Save plot to buffer
+#         buf = io.BytesIO()
+#         plt.savefig(buf, format='png', bbox_inches='tight')
+#         plt.close()
+#         buf.seek(0)
+
+#         # Encode as base64
+#         img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+#         return jsonify({
+#             "image": img_base64
+#         })
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 400
 
 @app.route('/')
 def home():
