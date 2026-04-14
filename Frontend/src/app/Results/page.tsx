@@ -1,11 +1,12 @@
 "use client";
 import { motion } from "framer-motion";
-import { Bell, User, BarChart3, Sparkles, RefreshCw, Home, ArrowRight } from "lucide-react";
+import { Bell, User, BarChart3, Sparkles, RefreshCw, Home, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import Insight from "@/Insight";
 
 const stressDrivers = [
     { label: "Sleep Quality", impact: 32, color: "from-primary to-primary/60" },
@@ -18,6 +19,19 @@ const Results = () => {
     const searchParams = useSearchParams();
     const [resultData, setResultData] = useState<any>(null);
     const [waterfallPlot, setWaterfallPlot] = useState<string | null>(null);
+    const [insights, setInsights] = useState<string | null>(null);
+
+    async function getInsights(data:any){
+        try {
+            // console.log("Fetching insights for data:", data);
+            const insights = await Insight(data);
+            console.log("Generated insights:", insights);
+            setInsights(insights);
+        } catch (error) {
+            setInsights("Error generating insights.");
+            console.error("Error generating insights:", error);
+        }
+    }
 
     useEffect(() => {
         try {
@@ -25,6 +39,8 @@ const Results = () => {
             if (encodedResult) {
                 const decoded = JSON.parse(decodeURIComponent(encodedResult));
                 setResultData(decoded);
+                // console.log("Decoded result data:", decoded);
+                getInsights(decoded);
                 console.log("Decoded result data:", decoded);
             }
         } catch (error) {
@@ -341,7 +357,8 @@ const Results = () => {
                 </div>
 
                 {/* AI Insight - Full Width Bottom */}
-                <motion.div
+                {
+                    insights ? <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7 }}
@@ -357,10 +374,31 @@ const Results = () => {
                         transition={{ delay: 0.9 }}
                         className="text-muted-foreground leading-relaxed italic"
                     >
-                        "Your recent data shows a correlation between late-night screen time and decreased HRV. The model predicts that
-                        prioritizing 15 minutes of mindfulness before bed could reduce your morning stress score by up to 15%."
+                        {insights}
                     </motion.p>
                 </motion.div>
+                :
+                // loading animation 
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="bg-card rounded-2xl border border-border shadow-card p-6 mb-10"
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                        <h2 className="text-lg font-bold text-foreground">AI Insight</h2>
+                    </div>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                        className="text-muted-foreground flex items-center gap-3 leading-relaxed italic"
+                    >
+                        <Loader2 className="w-5 h-5 animate-spin" /> loading insights from the AI analyst...
+                    </motion.p>
+                </motion.div>
+                }
 
                 {/* Footer */}
                 <motion.div
