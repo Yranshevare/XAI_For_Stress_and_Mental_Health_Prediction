@@ -26,7 +26,7 @@ const Results = () => {
             // console.log("Fetching insights for data:", data);
             const insights = await Insight(data);
             console.log("Generated insights:", insights);
-            setInsights(insights);
+            setInsights(insights.replace(/\*/g, ""));
         } catch (error) {
             setInsights("Error generating insights.");
             console.error("Error generating insights:", error);
